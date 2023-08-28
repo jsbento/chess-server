@@ -1,25 +1,26 @@
 package constants
 
 const (
-	BRD_SQ_NUM int = 120
+	BRD_SQ_NUM     int = 120
+	MAX_GAME_MOVES int = 2048
 )
 
 type Piece int
 
 const (
 	EMPTY Piece = iota
-	wP    Piece = 1
-	wN    Piece = 2
-	wB    Piece = 3
-	wR    Piece = 4
-	wQ    Piece = 5
-	wK    Piece = 6
-	bP    Piece = 7
-	bN    Piece = 8
-	bB    Piece = 9
-	bR    Piece = 10
-	bQ    Piece = 11
-	bK    Piece = 12
+	WP    Piece = 1
+	WN    Piece = 2
+	WB    Piece = 3
+	WR    Piece = 4
+	WQ    Piece = 5
+	WK    Piece = 6
+	BP    Piece = 7
+	BN    Piece = 8
+	BB    Piece = 9
+	BR    Piece = 10
+	BQ    Piece = 11
+	BK    Piece = 12
 )
 
 type File int
@@ -145,3 +146,35 @@ const (
 	BKCA CastlePerm = 4
 	BQCA CastlePerm = 8
 )
+
+type MoveFlag int
+
+const (
+	MFLAGEP   MoveFlag = 0x40000
+	MFLAGPS   MoveFlag = 0x80000
+	MFLAGCA   MoveFlag = 0x1000000
+	MFLAGCAP  MoveFlag = 0x7C000
+	MFLAGPROM MoveFlag = 0xF00000
+)
+
+var Sq120ToSq64 [BRD_SQ_NUM]int
+var Sq64ToSq120 [64]Square
+
+var BitTable [64]int = [64]int{
+	63, 30, 3, 32, 25, 41, 22, 33,
+	15, 50, 42, 13, 11, 53, 19, 34,
+	61, 29, 2, 51, 21, 43, 45, 10,
+	18, 47, 1, 54, 9, 57, 0, 35,
+	62, 31, 40, 4, 49, 5, 52, 26,
+	60, 6, 23, 44, 46, 27, 56, 16,
+	7, 39, 48, 24, 59, 14, 12, 55,
+	38, 28, 58, 20, 37, 17, 36, 8,
+}
+
+var FilesBrd [BRD_SQ_NUM]int
+var RanksBrd [BRD_SQ_NUM]int
+
+var KnDir [8]int = [8]int{-8, -19, -21, -12, 8, 19, 21, 12}
+var RkDir [4]int = [4]int{-1, -10, 1, 10}
+var BiDir [4]int = [4]int{-9, -11, 11, 9}
+var KiDir [8]int = [8]int{-1, -10, 1, 10, -9, -11, 11, 9}
