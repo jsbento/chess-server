@@ -1,8 +1,9 @@
 package constants
 
 const (
-	BRD_SQ_NUM     int = 120
-	MAX_GAME_MOVES int = 2048
+	BRD_SQ_NUM         int = 120
+	MAX_GAME_MOVES     int = 2048
+	MAX_POSITION_MOVES int = 256
 )
 
 type Piece int

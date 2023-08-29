@@ -1,8 +1,25 @@
 package types
 
 import (
+	"fmt"
+
 	c "github.com/jsbento/chess-server/pkg/constants"
+	"github.com/jsbento/chess-server/pkg/utils"
 )
+
+type MoveList struct {
+	Moves [c.MAX_POSITION_MOVES]Move
+	Count int
+}
+
+func (m MoveList) Print() {
+	fmt.Println("MoveList:")
+	for i := 0; i < m.Count; i++ {
+		move := m.Moves[i]
+		fmt.Printf("Move: %s > Score: %d\n", utils.PrintMove(move.Move), move.Score)
+	}
+	fmt.Printf("MoveList Count: %d\n", m.Count)
+}
 
 type Move struct {
 	Move  int

@@ -55,3 +55,8 @@ var PieceBishopQueen [13]bool = [13]bool{
 	false, false, false, true, false, true, false,
 	false, false, true, false, true, false,
 }
+
+var PieceSlides [13]bool = [13]bool{
+	false, false, false, true, true, true, false,
+	false, false, true, true, true, false,
+}

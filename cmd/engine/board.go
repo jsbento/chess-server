@@ -22,6 +22,10 @@ func (e *Engine) ResetBoard() {
 		e.Board.BigPce[i] = 0
 		e.Board.MajPce[i] = 0
 		e.Board.MinPce[i] = 0
+		e.Board.Material[i] = 0
+	}
+
+	for i := 0; i < 3; i++ {
 		e.Board.Pawns[i] = uint64(0)
 	}
 
