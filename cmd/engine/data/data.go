@@ -56,7 +56,18 @@ var PieceBishopQueen [13]bool = [13]bool{
 	false, false, true, false, true, false,
 }
 
+var PiecePawn [13]bool = [13]bool{
+	false, true, false, false, false, false, false,
+	true, false, false, false, false, false,
+}
+
 var PieceSlides [13]bool = [13]bool{
 	false, false, false, true, true, true, false,
 	false, false, true, true, true, false,
 }
+
+var VictimScore [13]int = [13]int{
+	0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600,
+}
+
+var MvvLvaScores [13][13]int

@@ -4,6 +4,9 @@ const (
 	BRD_SQ_NUM         int = 120
 	MAX_GAME_MOVES     int = 2048
 	MAX_POSITION_MOVES int = 256
+	MAX_DEPTH          int = 64
+	INFINITE           int = 30000
+	MATE               int = 29000
 )
 
 type Piece int
@@ -156,6 +159,10 @@ const (
 	MFLAGCA   MoveFlag = 0x1000000
 	MFLAGCAP  MoveFlag = 0x7C000
 	MFLAGPROM MoveFlag = 0xF00000
+)
+
+const (
+	NOMOVE int = 0
 )
 
 var Sq120ToSq64 [BRD_SQ_NUM]int

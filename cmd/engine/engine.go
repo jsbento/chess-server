@@ -2,6 +2,8 @@ package engine
 
 import (
 	t "github.com/jsbento/chess-server/cmd/engine/types"
+	c "github.com/jsbento/chess-server/pkg/constants"
+	"github.com/jsbento/chess-server/pkg/utils"
 )
 
 type Engine struct {
@@ -47,4 +49,47 @@ func (e *Engine) SetBit(bb *uint64, sq int) {
 
 func (e *Engine) ClearBit(bb *uint64, sq int) {
 	*bb &= e.ClearMask[sq]
+}
+
+func (e *Engine) ParseMove(m string) int {
+	if m[1] > '8' || m[1] < '1' {
+		return c.NOMOVE
+	}
+	if m[3] > '8' || m[3] < '1' {
+		return c.NOMOVE
+	}
+	if m[0] > 'h' || m[0] < 'a' {
+		return c.NOMOVE
+	}
+	if m[2] > 'h' || m[2] < 'a' {
+		return c.NOMOVE
+	}
+
+	from := utils.Fr2Sq(c.File((m[0] - 'a')), c.Rank(m[1]-'1'))
+	to := utils.Fr2Sq(c.File(m[2]-'a'), c.Rank(m[3]-'1'))
+
+	list := t.NewMoveList()
+	e.GenerateAllMoves(list)
+
+	for i := 0; i < list.Count; i++ {
+		move := list.Moves[i].Move
+		if utils.FromSq(move) == from && utils.ToSq(move) == to {
+			promPce := int(utils.Promoted(move))
+			if promPce != int(c.EMPTY) {
+				if utils.IsRQ(promPce) && !utils.IsBQ(promPce) && m[4] == 'r' {
+					return move
+				} else if !utils.IsRQ(promPce) && utils.IsBQ(promPce) && m[4] == 'b' {
+					return move
+				} else if utils.IsRQ(promPce) && utils.IsBQ(promPce) && m[4] == 'q' {
+					return move
+				} else if utils.IsKn(promPce) && m[4] == 'n' {
+					return move
+				}
+				continue
+			}
+			return move
+		}
+	}
+
+	return c.NOMOVE
 }

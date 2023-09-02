@@ -4,6 +4,7 @@ import (
 	d "github.com/jsbento/chess-server/cmd/engine/data"
 	t "github.com/jsbento/chess-server/cmd/engine/types"
 	c "github.com/jsbento/chess-server/pkg/constants"
+	"github.com/jsbento/chess-server/pkg/utils"
 )
 
 var LoopSlidePiece [8]c.Piece = [8]c.Piece{
@@ -44,21 +45,46 @@ func SqOffboard(sq c.Square) bool {
 	return c.FilesBrd[sq] == int(c.OFFBOARD)
 }
 
+func (e *Engine) MoveExists(move int) bool {
+	moveList := t.NewMoveList()
+	e.GenerateAllMoves(moveList)
+
+	for i := 0; i < moveList.Count; i++ {
+		if !e.MakeMove(moveList.Moves[i].Move) {
+			continue
+		}
+		e.TakeMove()
+		if move == moveList.Moves[i].Move {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (e *Engine) AddQuietMove(move int, list *t.MoveList) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = 0
+
+	if e.Board.SearchKillers[0][e.Board.Ply] == move {
+		list.Moves[list.Count].Score = 900000
+	} else if e.Board.SearchKillers[1][e.Board.Ply] == move {
+		list.Moves[list.Count].Score = 800000
+	} else {
+		list.Moves[list.Count].Score = e.Board.SearchHistory[e.Board.Pieces[utils.FromSq(move)]][utils.ToSq(move)]
+	}
+
 	list.Count++
 }
 
 func (e *Engine) AddCaptureMove(move int, list *t.MoveList) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = 0
+	list.Moves[list.Count].Score = d.MvvLvaScores[utils.Captured(move)][e.Board.Pieces[utils.FromSq(move)]] + 1000000
 	list.Count++
 }
 
 func (e *Engine) AddEnPassantMove(move int, list *t.MoveList) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = 0
+	list.Moves[list.Count].Score = 1000105
 	list.Count++
 }
 
@@ -106,6 +132,107 @@ func (e *Engine) AddBlackPawnMove(from, to c.Square, list *t.MoveList) {
 	}
 }
 
+func (e *Engine) GenerateAllCaptures(list *t.MoveList) {
+	list.Count = 0
+
+	if e.Board.Side == c.WHITE {
+		for pceNum := 0; pceNum < e.Board.PceNum[c.WP]; pceNum++ {
+			sq := e.Board.Plist[c.WP][pceNum]
+
+			if !SqOffboard(sq+9) && d.PieceCol[int(e.Board.Pieces[sq+9])] == c.BLACK {
+				e.AddWhitePawnCapMove(sq, sq+9, e.Board.Pieces[sq+9], list)
+			}
+			if !SqOffboard(sq+11) && d.PieceCol[int(e.Board.Pieces[sq+11])] == c.BLACK {
+				e.AddWhitePawnCapMove(sq, sq+11, e.Board.Pieces[sq+11], list)
+			}
+
+			if e.Board.EnPas != c.NO_SQ {
+				if sq+9 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq+9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+				if sq+11 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq+11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+			}
+		}
+	} else {
+		for pceNum := 0; pceNum < e.Board.PceNum[c.BP]; pceNum++ {
+			sq := e.Board.Plist[c.BP][pceNum]
+
+			if !SqOffboard(sq-9) && d.PieceCol[int(e.Board.Pieces[sq-9])] == c.WHITE {
+				e.AddBlackPawnCapMove(sq, sq-9, e.Board.Pieces[sq-9], list)
+			}
+			if !SqOffboard(sq-11) && d.PieceCol[int(e.Board.Pieces[sq-11])] == c.WHITE {
+				e.AddBlackPawnCapMove(sq, sq-11, e.Board.Pieces[sq-11], list)
+			}
+
+			if e.Board.EnPas != c.NO_SQ {
+				if sq-9 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq-9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+				if sq-11 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq-11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+			}
+		}
+	}
+
+	pceIdx := LoopSlideIndex[e.Board.Side]
+	pce := LoopSlidePiece[pceIdx]
+	pceIdx++
+
+	for pce != 0 {
+		for pceNum := 0; pceNum < e.Board.PceNum[pce]; pceNum++ {
+			sq := e.Board.Plist[pce][pceNum]
+			for i := 0; i < NumDir[pce]; i++ {
+				dir := PieceDir[pce][i]
+				tSq := sq + c.Square(dir)
+
+				for !SqOffboard(tSq) {
+					if e.Board.Pieces[tSq] != c.Piece(c.EMPTY) {
+						if d.PieceCol[int(e.Board.Pieces[tSq])] == e.Board.Side^1 {
+							e.AddCaptureMove(Move(sq, tSq, e.Board.Pieces[tSq], c.EMPTY, 0), list)
+						}
+						break
+					}
+					tSq += c.Square(dir)
+				}
+			}
+		}
+
+		pce = LoopSlidePiece[pceIdx]
+		pceIdx++
+	}
+
+	pceIdx = LoopNonSlideIndex[e.Board.Side]
+	pce = LoopNonSlidePiece[pceIdx]
+	pceIdx++
+
+	for pce != 0 {
+		for pceNum := 0; pceNum < e.Board.PceNum[pce]; pceNum++ {
+			sq := e.Board.Plist[pce][pceNum]
+			for i := 0; i < NumDir[pce]; i++ {
+				dir := PieceDir[pce][i]
+				tSq := sq + c.Square(dir)
+
+				if SqOffboard(tSq) {
+					continue
+				}
+
+				if e.Board.Pieces[tSq] != c.Piece(c.EMPTY) {
+					if d.PieceCol[int(e.Board.Pieces[tSq])] == e.Board.Side^1 {
+						e.AddCaptureMove(Move(sq, tSq, e.Board.Pieces[tSq], c.EMPTY, 0), list)
+					}
+					continue
+				}
+			}
+		}
+
+		pce = LoopNonSlidePiece[pceIdx]
+		pceIdx++
+	}
+}
+
 func (e *Engine) GenerateAllMoves(list *t.MoveList) {
 	list.Count = 0
 
@@ -127,11 +254,13 @@ func (e *Engine) GenerateAllMoves(list *t.MoveList) {
 				e.AddWhitePawnCapMove(sq, sq+11, e.Board.Pieces[sq+11], list)
 			}
 
-			if sq+9 == e.Board.EnPas {
-				e.AddEnPassantMove(Move(sq, sq+9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
-			}
-			if sq+11 == e.Board.EnPas {
-				e.AddEnPassantMove(Move(sq, sq+11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+			if e.Board.EnPas != c.NO_SQ {
+				if sq+9 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq+9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+				if sq+11 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq+11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
 			}
 		}
 
@@ -168,11 +297,13 @@ func (e *Engine) GenerateAllMoves(list *t.MoveList) {
 				e.AddBlackPawnCapMove(sq, sq-11, e.Board.Pieces[sq-11], list)
 			}
 
-			if sq-9 == e.Board.EnPas {
-				e.AddEnPassantMove(Move(sq, sq-9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
-			}
-			if sq-11 == e.Board.EnPas {
-				e.AddEnPassantMove(Move(sq, sq-11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+			if e.Board.EnPas != c.NO_SQ {
+				if sq-9 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq-9, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
+				if sq-11 == e.Board.EnPas {
+					e.AddEnPassantMove(Move(sq, sq-11, c.EMPTY, c.EMPTY, c.MFLAGEP), list)
+				}
 			}
 		}
 

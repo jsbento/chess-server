@@ -1,6 +1,7 @@
 package init
 
 import (
+	d "github.com/jsbento/chess-server/cmd/engine/data"
 	c "github.com/jsbento/chess-server/pkg/constants"
 	"github.com/jsbento/chess-server/pkg/utils"
 )
@@ -8,6 +9,7 @@ import (
 func AllInit() {
 	InitSq120To64()
 	InitFilesRanksBrd()
+	InitMvvLva()
 }
 
 func InitSq120To64() {
@@ -41,6 +43,14 @@ func InitFilesRanksBrd() {
 			sq := utils.Fr2Sq(file, rank)
 			c.FilesBrd[sq] = int(file)
 			c.RanksBrd[sq] = int(rank)
+		}
+	}
+}
+
+func InitMvvLva() {
+	for attacker := c.WP; attacker < c.BK; attacker++ {
+		for victim := c.WP; victim < c.BK; victim++ {
+			d.MvvLvaScores[victim][attacker] = d.VictimScore[victim] + 6 - (d.VictimScore[attacker] / 100)
 		}
 	}
 }
