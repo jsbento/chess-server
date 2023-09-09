@@ -1,12 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	e "github.com/jsbento/chess-server/cmd/engine"
 	i "github.com/jsbento/chess-server/cmd/engine/init"
-	t "github.com/jsbento/chess-server/cmd/engine/types"
-	c "github.com/jsbento/chess-server/pkg/constants"
 )
 
 const (
@@ -24,37 +20,6 @@ const (
 
 func main() {
 	i.AllInit()
-
 	engine := e.NewEngine()
-	engine.ParseFEN(START_FEN)
-
-	var moveStr string
-	for {
-		engine.PrintBoard()
-		moveStr = ""
-		fmt.Println("Enter Move: ")
-		fmt.Scanln(&moveStr)
-
-		if moveStr == "quit" {
-			break
-		} else if moveStr == "take" {
-			engine.TakeMove()
-			continue
-		} else if moveStr == "search" {
-			engine.SearchPosition(&t.SearchInfo{
-				Depth: 6,
-			})
-		} else {
-			move := engine.ParseMove(moveStr)
-			if move != c.NOMOVE {
-				engine.MakeMove(move)
-				if engine.IsRepetition() {
-					fmt.Println("Repetition")
-				}
-				continue
-			} else {
-				fmt.Println("Move not parsed:", moveStr)
-			}
-		}
-	}
+	engine.UCILoop()
 }

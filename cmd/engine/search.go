@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math"
 
 	t "github.com/jsbento/chess-server/cmd/engine/types"
 	c "github.com/jsbento/chess-server/pkg/constants"
@@ -31,8 +32,10 @@ func (e *Engine) IsRepetition() bool {
 	return false
 }
 
-func (e *Engine) CheckUp() {
-
+func (e *Engine) CheckUp(info *t.SearchInfo) {
+	if info.TimeSet && utils.GetTimeMs() > info.StopTime {
+		info.Stopped = true
+	}
 }
 
 func (e *Engine) ClearForSearch(info *t.SearchInfo) {
@@ -48,10 +51,11 @@ func (e *Engine) ClearForSearch(info *t.SearchInfo) {
 		}
 	}
 
-	e.Board.PvTable.Clear()
+	e.Board.HashTable.OverWrite = 0
+	e.Board.HashTable.Hit = 0
+	e.Board.HashTable.Cut = 0
 	e.Board.Ply = 0
 
-	info.StartTime = utils.GetTimeMs()
 	info.Stopped = false
 	info.Nodes = 0
 	info.Fh = 0.0
@@ -59,6 +63,10 @@ func (e *Engine) ClearForSearch(info *t.SearchInfo) {
 }
 
 func (e *Engine) Quiescence(alpha, beta int, info *t.SearchInfo) int {
+	if info.Nodes&2047 == 0 {
+		e.CheckUp(info)
+	}
+
 	info.Nodes++
 
 	if e.IsRepetition() || e.Board.FiftyMove >= 100 {
@@ -83,8 +91,6 @@ func (e *Engine) Quiescence(alpha, beta int, info *t.SearchInfo) int {
 	e.GenerateAllCaptures(list)
 
 	legal := 0
-	oldAlpha := alpha
-	bestMove := c.NOMOVE
 	score = -c.INFINITE
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
@@ -107,12 +113,7 @@ func (e *Engine) Quiescence(alpha, beta int, info *t.SearchInfo) int {
 				return beta
 			}
 			alpha = score
-			bestMove = list.Moves[moveNum].Move
 		}
-	}
-
-	if alpha != oldAlpha {
-		e.StorePvMove(bestMove)
 	}
 
 	return alpha
@@ -120,17 +121,49 @@ func (e *Engine) Quiescence(alpha, beta int, info *t.SearchInfo) int {
 
 func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bool) int {
 	if depth == 0 {
-		info.Nodes++
 		return e.Quiescence(alpha, beta, info)
 	}
+
+	if info.Nodes&2047 == 0 {
+		e.CheckUp(info)
+	}
+
 	info.Nodes++
 
-	if e.IsRepetition() || e.Board.FiftyMove >= 100 {
+	if e.IsRepetition() || e.Board.FiftyMove >= 100 && e.Board.Ply != 0 {
 		return 0
 	}
 
 	if e.Board.Ply > c.MAX_DEPTH-1 {
 		return e.EvalPosition()
+	}
+
+	inCheck := e.IsSqAttacked(c.Square(e.Board.KingSq[e.Board.Side]), e.Board.Side^1)
+	if inCheck {
+		depth++
+	}
+
+	score := -c.INFINITE
+	pvMove := c.NOMOVE
+
+	if e.ProbeHashEntry(&pvMove, &score, alpha, beta, depth) {
+		e.Board.HashTable.Cut++
+		return score
+	}
+
+	if doNull && !inCheck && e.Board.Ply != 0 && e.Board.BigPce[e.Board.Side] > 1 && depth >= 4 {
+		e.MakeNullMove()
+		score = -e.AlphaBeta(-beta, -beta+1, depth-4, info, false)
+		e.TakeNullMove()
+
+		if info.Stopped {
+			return 0
+		}
+
+		if score >= beta && int(math.Abs(float64(score))) < c.MATE {
+			info.NullCut++
+			return beta
+		}
 	}
 
 	list := t.NewMoveList()
@@ -139,9 +172,9 @@ func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bo
 	legal := 0
 	oldAlpha := alpha
 	bestMove := c.NOMOVE
-	score := -c.INFINITE
+	bestScore := -c.INFINITE
+	score = -c.INFINITE
 
-	pvMove := e.ProbePvTable()
 	if pvMove != c.NOMOVE {
 		for moveNum := 0; moveNum < list.Count; moveNum++ {
 			if list.Moves[moveNum].Move == pvMove {
@@ -161,31 +194,40 @@ func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bo
 		score = -e.AlphaBeta(-beta, -alpha, depth-1, info, true)
 		e.TakeMove()
 
-		if score > alpha {
-			if score >= beta {
-				if legal == 1 {
-					info.Fhf++
+		if info.Stopped {
+			return 0
+		}
+		if score > bestScore {
+			bestScore = score
+			bestMove = list.Moves[moveNum].Move
+			if score > alpha {
+				if score >= beta {
+					if legal == 1 {
+						info.Fhf++
+					}
+					info.Fh++
+
+					if list.Moves[moveNum].Move&int(c.MFLAGCAP) == 0 {
+						e.Board.SearchKillers[1][e.Board.Ply] = e.Board.SearchKillers[0][e.Board.Ply]
+						e.Board.SearchKillers[0][e.Board.Ply] = list.Moves[moveNum].Move
+					}
+
+					e.StoreHashEntry(bestMove, beta, int(c.HFBETA), depth)
+
+					return beta
 				}
-				info.Fh++
+				alpha = score
+				bestMove = list.Moves[moveNum].Move
 
 				if list.Moves[moveNum].Move&int(c.MFLAGCAP) == 0 {
-					e.Board.SearchKillers[1][e.Board.Ply] = e.Board.SearchKillers[0][e.Board.Ply]
-					e.Board.SearchKillers[0][e.Board.Ply] = list.Moves[moveNum].Move
+					e.Board.SearchHistory[e.Board.Pieces[utils.FromSq(bestMove)]][utils.ToSq(bestMove)] += depth
 				}
-
-				return beta
-			}
-			alpha = score
-			bestMove = list.Moves[moveNum].Move
-
-			if list.Moves[moveNum].Move&int(c.MFLAGCAP) == 0 {
-				e.Board.SearchHistory[e.Board.Pieces[utils.FromSq(bestMove)]][utils.ToSq(bestMove)] += depth
 			}
 		}
 	}
 
 	if legal == 0 {
-		if e.IsSqAttacked(c.Square(e.Board.KingSq[e.Board.Side]), e.Board.Side^1) {
+		if inCheck {
 			return -c.MATE + e.Board.Ply
 		} else {
 			return 0
@@ -193,7 +235,9 @@ func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bo
 	}
 
 	if alpha != oldAlpha {
-		e.StorePvMove(bestMove)
+		e.StoreHashEntry(bestMove, bestScore, int(c.HFEXACT), depth)
+	} else {
+		e.StoreHashEntry(bestMove, alpha, int(c.HFALPHA), depth)
 	}
 
 	return alpha
@@ -209,6 +253,11 @@ func (e *Engine) SearchPosition(info *t.SearchInfo) {
 
 	for currDepth := 1; currDepth <= info.Depth; currDepth++ {
 		bestScore = e.AlphaBeta(-c.INFINITE, c.INFINITE, currDepth, info, true)
+
+		if info.Stopped {
+			break
+		}
+
 		pvMoves = e.GetPvLine(currDepth)
 		bestMove = e.Board.PvArray[0]
 		fmt.Printf("Depth: %d, Score: %d, Nodes: %d, Move: %s\n", currDepth, bestScore, info.Nodes, utils.PrintMove(bestMove))
@@ -217,6 +266,7 @@ func (e *Engine) SearchPosition(info *t.SearchInfo) {
 			fmt.Printf(" %s", utils.PrintMove(e.Board.PvArray[pvNum]))
 		}
 		fmt.Println()
-		fmt.Printf("Ordering: %.2f\n", float64(info.Fhf)/float64(info.Fh))
 	}
+
+	fmt.Printf("bestmove %s\n", utils.PrintMove(bestMove))
 }

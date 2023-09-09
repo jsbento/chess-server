@@ -1,18 +1,19 @@
 package constants
 
 const (
-	BRD_SQ_NUM         int = 120
-	MAX_GAME_MOVES     int = 2048
-	MAX_POSITION_MOVES int = 256
-	MAX_DEPTH          int = 64
-	INFINITE           int = 30000
-	MATE               int = 29000
+	BRD_SQ_NUM         int    = 120
+	MAX_GAME_MOVES     int    = 2048
+	MAX_POSITION_MOVES int    = 256
+	MAX_DEPTH          int    = 64
+	INFINITE           int    = 30000
+	MATE               int    = 29000
+	START_FEN          string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 )
 
 type Piece int
 
 const (
-	EMPTY Piece = iota
+	EMPTY Piece = 0
 	WP    Piece = 1
 	WN    Piece = 2
 	WB    Piece = 3
@@ -30,7 +31,7 @@ const (
 type File int
 
 const (
-	FILE_A    File = iota
+	FILE_A    File = 0
 	FILE_B    File = 1
 	FILE_C    File = 2
 	FILE_D    File = 3
@@ -44,7 +45,7 @@ const (
 type Rank int
 
 const (
-	RANK_1    Rank = iota
+	RANK_1    Rank = 0
 	RANK_2    Rank = 1
 	RANK_3    Rank = 2
 	RANK_4    Rank = 3
@@ -58,7 +59,7 @@ const (
 type Side int
 
 const (
-	WHITE Side = iota
+	WHITE Side = 0
 	BLACK Side = 1
 	BOTH  Side = 2
 )
@@ -161,6 +162,15 @@ const (
 	MFLAGPROM MoveFlag = 0xF00000
 )
 
+type HashFlag int
+
+const (
+	HFNONE  HashFlag = 0
+	HFALPHA HashFlag = 1
+	HFBETA  HashFlag = 2
+	HFEXACT HashFlag = 3
+)
+
 const (
 	NOMOVE int = 0
 )
@@ -186,3 +196,10 @@ var KnDir [8]int = [8]int{-8, -19, -21, -12, 8, 19, 21, 12}
 var RkDir [4]int = [4]int{-1, -10, 1, 10}
 var BiDir [4]int = [4]int{-9, -11, 11, 9}
 var KiDir [8]int = [8]int{-1, -10, 1, 10, -9, -11, 11, 9}
+
+var FileBBMask [8]uint64
+var RankBBMask [8]uint64
+
+var BlackPassedMask [64]uint64
+var WhitePassedMask [64]uint64
+var IsolatedMask [64]uint64

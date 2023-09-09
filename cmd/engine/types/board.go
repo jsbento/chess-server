@@ -66,8 +66,8 @@ type Board struct {
 
 	Plist [13][10]c.Square
 
-	PvTable *PvTable
-	PvArray [c.MAX_DEPTH]int
+	HashTable *HashTable
+	PvArray   [c.MAX_DEPTH]int
 
 	SearchHistory [13][c.BRD_SQ_NUM]int
 	SearchKillers [2][c.MAX_DEPTH]int
@@ -92,7 +92,7 @@ func NewBoard() *Board {
 		Material:      [2]int{},
 		History:       [c.MAX_GAME_MOVES]Undo{},
 		Plist:         [13][10]c.Square{},
-		PvTable:       NewPvTable(150000),
+		HashTable:     NewHashTable(175000),
 		PvArray:       [c.MAX_DEPTH]int{},
 		SearchHistory: [13][c.BRD_SQ_NUM]int{},
 		SearchKillers: [2][c.MAX_DEPTH]int{},

@@ -270,3 +270,43 @@ func (e *Engine) TakeMove() {
 		}
 	}
 }
+
+func (e *Engine) MakeNullMove() {
+	e.Board.Ply++
+	e.Board.History[e.Board.HisPly].PosKey = e.Board.PosKey
+
+	if e.Board.EnPas != c.NO_SQ {
+		e.HashEnPas()
+	}
+
+	e.Board.History[e.Board.HisPly].Move = c.NOMOVE
+	e.Board.History[e.Board.HisPly].FiftyMove = e.Board.FiftyMove
+	e.Board.History[e.Board.HisPly].EnPas = e.Board.EnPas
+	e.Board.History[e.Board.HisPly].CastlePerm = e.Board.CastlePerm
+	e.Board.EnPas = c.NO_SQ
+
+	e.Board.Side ^= 1
+	e.Board.HisPly++
+	e.HashSide()
+}
+
+func (e *Engine) TakeNullMove() {
+	e.Board.HisPly--
+	e.Board.Ply--
+
+	if e.Board.EnPas != c.NO_SQ {
+		e.HashEnPas()
+	}
+
+	e.Board.CastlePerm = e.Board.History[e.Board.HisPly].CastlePerm
+	e.Board.FiftyMove = e.Board.History[e.Board.HisPly].FiftyMove
+	e.Board.EnPas = e.Board.History[e.Board.HisPly].EnPas
+
+	if e.Board.EnPas != c.NO_SQ {
+		e.HashEnPas()
+	}
+
+	e.Board.Side ^= 1
+	e.Board.PosKey ^= e.SideKey
+	e.HashSide()
+}

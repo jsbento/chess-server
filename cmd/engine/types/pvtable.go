@@ -4,31 +4,47 @@ import (
 	c "github.com/jsbento/chess-server/pkg/constants"
 )
 
-type PvEntry struct {
+type HashEntry struct {
 	PosKey uint64
 	Move   int
+	Score  int
+	Depth  int
+	Flags  int
 }
 
-type PvTable struct {
-	PvEntries  []PvEntry
-	NumEntries int
+type HashTable struct {
+	HashEntries []HashEntry
+	NumEntries  int
+	NewWrite    int
+	OverWrite   int
+	Cut         int
+	Hit         int
 }
 
-func NewPvTable(size int) (pvTable *PvTable) {
+func NewHashTable(size int) (hashTable *HashTable) {
 	numEntries := size - 2
 
-	pvTable = &PvTable{
-		PvEntries:  make([]PvEntry, size),
-		NumEntries: numEntries,
+	hashTable = &HashTable{
+		HashEntries: make([]HashEntry, size),
+		NumEntries:  numEntries,
+		NewWrite:    0,
+		OverWrite:   0,
+		Cut:         0,
+		Hit:         0,
 	}
-	pvTable.Clear()
+	hashTable.Clear()
 
 	return
 }
 
-func (pv *PvTable) Clear() {
-	for i := 0; i < pv.NumEntries; i++ {
-		pv.PvEntries[i].PosKey = 0
-		pv.PvEntries[i].Move = c.NOMOVE
+func (hashTable *HashTable) Clear() {
+	for i := 0; i < hashTable.NumEntries; i++ {
+		hashTable.HashEntries[i].PosKey = uint64(0)
+		hashTable.HashEntries[i].Move = c.NOMOVE
+		hashTable.HashEntries[i].Score = 0
+		hashTable.HashEntries[i].Depth = 0
+		hashTable.HashEntries[i].Flags = 0
 	}
+
+	hashTable.NewWrite = 0
 }

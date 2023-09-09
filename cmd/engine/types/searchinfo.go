@@ -16,4 +16,6 @@ type SearchInfo struct {
 
 	Fh  float64
 	Fhf float64
+
+	NullCut int
 }
