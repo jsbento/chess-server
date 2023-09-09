@@ -21,5 +21,7 @@ const (
 func main() {
 	i.AllInit()
 	engine := e.NewEngine()
-	engine.UCILoop()
+	engine.ParseFEN(PERFT)
+	engine.PerftTest(5)
+	//engine.UCILoop()
 }
