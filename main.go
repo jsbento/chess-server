@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+
+	"github.com/joho/godotenv"
 	i "github.com/jsbento/chess-server/cmd/engine/init"
 	s "github.com/jsbento/chess-server/cmd/server"
 )
@@ -19,7 +22,14 @@ import (
 // )
 
 func main() {
+	if err := godotenv.Load("./.env"); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	i.AllInit()
-	srv := s.NewServer()
+	srv, err := s.NewServer()
+	if err != nil {
+		panic(err)
+	}
 	srv.Start()
 }
