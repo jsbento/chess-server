@@ -243,7 +243,7 @@ func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bo
 	return alpha
 }
 
-func (e *Engine) SearchPosition(info *t.SearchInfo) {
+func (e *Engine) SearchPosition(info *t.SearchInfo) string {
 	bestMove := c.NOMOVE
 	bestScore := -c.INFINITE
 	pvMoves := 0
@@ -268,5 +268,7 @@ func (e *Engine) SearchPosition(info *t.SearchInfo) {
 		fmt.Println()
 	}
 
-	fmt.Printf("bestmove %s\n", utils.PrintMove(bestMove))
+	move := utils.PrintMove(bestMove)
+	fmt.Printf("bestmove %s\n", move)
+	return move
 }

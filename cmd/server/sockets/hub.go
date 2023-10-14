@@ -1,10 +1,17 @@
 package sockets
 
+import (
+	e "github.com/jsbento/chess-server/cmd/engine"
+	eT "github.com/jsbento/chess-server/cmd/engine/types"
+)
+
 type ChessHub struct {
 	Clients    map[*Client]bool
 	Broadcast  chan []byte
 	Register   chan *Client
 	Unregister chan *Client
+	Engine     *e.Engine
+	SearchInfo *eT.SearchInfo
 }
 
 func NewChessHub() *ChessHub {
@@ -13,6 +20,8 @@ func NewChessHub() *ChessHub {
 		Broadcast:  make(chan []byte),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
+		Engine:     e.NewEngine(),
+		SearchInfo: &eT.SearchInfo{},
 	}
 }
 

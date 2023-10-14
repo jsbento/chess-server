@@ -18,10 +18,16 @@ func NewServer() (server *Server) {
 		r:    chi.NewRouter(),
 		cHub: s.NewChessHub(),
 	}
-	server.cHub.Run()
 
 	server.r.Get("/play", func(w http.ResponseWriter, r *http.Request) {
 		s.ServeChessSocket(server.cHub, w, r)
 	})
 	return
+}
+
+func (s *Server) Start() {
+	go s.cHub.Run()
+	if err := http.ListenAndServe(":8080", s.r); err != nil {
+		panic(err)
+	}
 }

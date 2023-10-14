@@ -13,7 +13,7 @@ import (
 	"github.com/jsbento/chess-server/pkg/utils"
 )
 
-func (e *Engine) ParseGo(line string, info *t.SearchInfo) {
+func (e *Engine) ParseGo(line string, info *t.SearchInfo) string {
 	depth, movesToGo, moveTime := -1, 30, -1
 	time, inc := -1, 0
 
@@ -77,7 +77,7 @@ func (e *Engine) ParseGo(line string, info *t.SearchInfo) {
 	}
 
 	fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", time, info.StartTime, info.StopTime, info.Depth, info.TimeSet)
-	e.SearchPosition(info)
+	return e.SearchPosition(info)
 }
 
 func (e *Engine) ParsePosition(line string) error {
@@ -103,8 +103,6 @@ func (e *Engine) ParsePosition(line string) error {
 			e.Board.Ply = 0
 		}
 	}
-
-	e.PrintBoard() // omit this line when running in sockets
 
 	return nil
 }
@@ -153,4 +151,34 @@ func (e *Engine) UCILoop() {
 			break
 		}
 	}
+}
+
+func (e *Engine) ParseUCICommand(command string, info *t.SearchInfo) (string, error) {
+	line := strings.TrimSpace(strings.Trim(command, "\r\n\t"))
+
+	if line == "" {
+		return "", nil
+	} else if line == "isready" {
+		return "readyok", nil
+	} else if strings.Contains(line, "position") {
+		err := e.ParsePosition(line)
+		if err != nil {
+			return "", fmt.Errorf("error parsing position: %s", err.Error())
+		}
+		return "Position received", nil
+	} else if line == "ucinewgame" {
+		err := e.ParsePosition("position startpos")
+		if err != nil {
+			return "", fmt.Errorf("error starting new game: %s", err.Error())
+		}
+		return "New game started", nil
+	} else if strings.Contains(line, "go") {
+		return e.ParseGo(line, info), nil
+	} else if line == "quit" {
+		info.Quit = true
+		return "Game Stopped", nil
+	} else if line == "uci" {
+		return "id name ViceGo 1.0\nid author jsbento\nuciok", nil
+	}
+	return "No command found", nil
 }

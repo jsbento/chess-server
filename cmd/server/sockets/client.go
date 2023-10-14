@@ -52,7 +52,13 @@ func (c *Client) reader() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.Hub.Broadcast <- message
+		msg, err := c.Hub.Engine.ParseUCICommand(string(message), c.Hub.SearchInfo)
+		if err != nil {
+			log.Printf("error: %v", err)
+			break
+		}
+
+		c.Hub.Broadcast <- []byte(msg)
 	}
 }
 
