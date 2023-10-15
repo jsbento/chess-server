@@ -8,15 +8,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 
+	"github.com/jsbento/chess-server/cmd/server/services/games"
 	s "github.com/jsbento/chess-server/cmd/server/sockets"
 	t "github.com/jsbento/chess-server/cmd/server/types"
-	m "github.com/jsbento/chess-server/pkg/mongo"
 )
 
 type Server struct {
 	r    *chi.Mux
 	cHub *s.ChessHub
-	m    *m.Store
+	gmS  *games.GameService
 }
 
 func NewServer() (server *Server, err error) {
@@ -24,7 +24,7 @@ func NewServer() (server *Server, err error) {
 	if err := config.LoadAndValidate(); err != nil {
 		return nil, err
 	}
-	store, err := m.NewStore(config.MongoHost, config.MongoDB)
+	gmS, err := games.NewGameService(config)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func NewServer() (server *Server, err error) {
 	server = &Server{
 		r:    chi.NewRouter(),
 		cHub: s.NewChessHub(),
-		m:    store,
+		gmS:  gmS,
 	}
 
 	server.r.Use(
