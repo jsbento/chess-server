@@ -5,18 +5,19 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
 
-	"github.com/jsbento/chess-server/cmd/server/services/games"
 	s "github.com/jsbento/chess-server/cmd/server/sockets"
 	t "github.com/jsbento/chess-server/cmd/server/types"
+	"github.com/jsbento/chess-server/cmd/services/games"
+	"github.com/jsbento/chess-server/cmd/services/users"
+	"github.com/jsbento/chess-server/pkg/api"
 )
 
 type Server struct {
-	r    *chi.Mux
-	cHub *s.ChessHub
-	gmS  *games.GameService
+	r     *chi.Mux
+	cHub  *s.ChessHub
+	gameS *games.GameService
+	userS *users.UserService
 }
 
 func NewServer() (server *Server, err error) {
@@ -28,18 +29,17 @@ func NewServer() (server *Server, err error) {
 	if err != nil {
 		return nil, err
 	}
-
-	server = &Server{
-		r:    chi.NewRouter(),
-		cHub: s.NewChessHub(),
-		gmS:  gmS,
+	usS, err := users.NewUserService(config)
+	if err != nil {
+		return nil, err
 	}
 
-	server.r.Use(
-		render.SetContentType(render.ContentTypeJSON),
-		middleware.Logger,
-		middleware.Recoverer,
-	)
+	server = &Server{
+		r:     api.NewRouter(),
+		cHub:  s.NewChessHub(),
+		gameS: gmS,
+		userS: usS,
+	}
 
 	// ability to http play engine instead of sockets, might be faster
 	server.r.Get("/play", func(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +48,17 @@ func NewServer() (server *Server, err error) {
 	server.r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
+
+	// user routes
+	server.r.Route("/users", func(r chi.Router) {
+		r.Post("/signup", server.SignUp())
+		r.Post("/signin", server.SignIn())
+	})
+
+	// game routes
+	server.r.Route("/games", func(r chi.Router) {
+	})
+
 	return
 }
 

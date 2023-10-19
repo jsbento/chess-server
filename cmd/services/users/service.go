@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	t "github.com/jsbento/chess-server/cmd/server/services/users/types"
 	sT "github.com/jsbento/chess-server/cmd/server/types"
+	t "github.com/jsbento/chess-server/cmd/services/users/types"
 	"github.com/jsbento/chess-server/pkg/auth"
 	m "github.com/jsbento/chess-server/pkg/mongo"
 	uuid "github.com/satori/go.uuid"

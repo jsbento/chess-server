@@ -3,8 +3,8 @@ package games
 import (
 	"time"
 
-	t "github.com/jsbento/chess-server/cmd/server/services/games/types"
 	sT "github.com/jsbento/chess-server/cmd/server/types"
+	t "github.com/jsbento/chess-server/cmd/services/games/types"
 	m "github.com/jsbento/chess-server/pkg/mongo"
 	uuid "github.com/satori/go.uuid"
 	"go.mongodb.org/mongo-driver/mongo/options"
