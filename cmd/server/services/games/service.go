@@ -29,6 +29,10 @@ func NewGameService(config *sT.ServerConfig) (*GameService, error) {
 	}, nil
 }
 
+func (s *GameService) Close() error {
+	return s.m.Disconnect()
+}
+
 func (s *GameService) CreateGame(game *t.Game) error {
 	col := s.m.Col(GamesColl)
 
@@ -81,6 +85,15 @@ func (s *GameService) SearchGames(req *t.SearchGamesReq) (out []*t.Game, err err
 
 	out = []*t.Game{}
 	err = s.m.Find(col, q, opts, &out)
+
+	return
+}
+
+func (s *GameService) DeleteGame(id string) (out *t.Game, err error) {
+	col := s.m.Col(GamesColl)
+
+	out = &t.Game{}
+	err = s.m.Delete(col, m.M{"_id": id}, out)
 
 	return
 }
