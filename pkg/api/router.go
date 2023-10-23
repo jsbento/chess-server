@@ -12,7 +12,7 @@ func NewRouter() *chi.Mux {
 	r.Use(
 		render.SetContentType(render.ContentTypeJSON),
 		middleware.Logger,
-		middleware.Recoverer,
+		Recoverer,
 	)
 
 	return r

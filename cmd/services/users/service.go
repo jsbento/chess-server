@@ -37,12 +37,12 @@ func (s *UserService) Close() error {
 }
 
 func (s *UserService) SignUp(req *t.CreateUserReq) (out *t.SignInResp, err error) {
-	if user, err := s.GetUser(&t.GetUserReq{
-		Username: &req.Username,
-		Email:    &req.Email,
+	if users, err := s.SearchUsers(&t.SearchUsersReq{
+		Usernames: &[]string{req.Username},
+		Emails:    &[]string{req.Email},
 	}); err != nil && err != mongo.ErrNoDocuments {
 		return nil, err
-	} else if user != nil {
+	} else if len(users) > 0 {
 		return nil, errors.New("username or email already exists")
 	}
 
@@ -131,10 +131,14 @@ func (s *UserService) GetUser(req *t.GetUserReq) (out *t.User, err error) {
 	if req.Id != nil {
 		q["_id"] = *req.Id
 	}
-	if req.Username != nil {
+	if req.Username != nil && req.Email != nil {
+		q["$or"] = []m.M{
+			{"username": *req.Username},
+			{"email": *req.Email},
+		}
+	} else if req.Username != nil {
 		q["username"] = *req.Username
-	}
-	if req.Email != nil {
+	} else if req.Email != nil {
 		q["email"] = *req.Email
 	}
 
