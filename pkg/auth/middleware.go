@@ -30,8 +30,8 @@ func CheckAuth(handler http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			expAt, ok := claims["exp"].(int64)
-			if !ok || expAt < time.Now().Unix() {
+			expAt, ok := claims["exp"].(float64)
+			if !ok || int64(expAt) < time.Now().Unix() {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -58,8 +58,8 @@ func UserFromHeader(r *http.Request) string {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		expAt, ok := claims["exp"].(int64)
-		if !ok || expAt < time.Now().Unix() {
+		expAt, ok := claims["exp"].(float64)
+		if !ok || int64(expAt) < time.Now().Unix() {
 			return ""
 		}
 

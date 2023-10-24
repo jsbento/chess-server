@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 
 	s "github.com/jsbento/chess-server/cmd/server/sockets"
 	t "github.com/jsbento/chess-server/cmd/server/types"
 	"github.com/jsbento/chess-server/cmd/services/games"
 	"github.com/jsbento/chess-server/cmd/services/users"
 	"github.com/jsbento/chess-server/pkg/api"
+	"github.com/jsbento/chess-server/pkg/auth"
 )
 
 type Server struct {
@@ -41,6 +43,15 @@ func NewServer() (server *Server, err error) {
 		userS: usS,
 	}
 
+	server.r.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}).Handler)
+
 	// ability to http play engine instead of sockets, might be faster
 	server.r.Get("/play", func(w http.ResponseWriter, r *http.Request) {
 		s.ServeChessSocket(server.cHub, w, r)
@@ -57,6 +68,7 @@ func NewServer() (server *Server, err error) {
 
 	// game routes
 	server.r.Route("/games", func(r chi.Router) {
+		r.Get("/", auth.CheckAuth(server.SearchGames()))
 	})
 
 	return

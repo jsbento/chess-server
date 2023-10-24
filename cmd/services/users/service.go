@@ -78,7 +78,7 @@ func (s *UserService) SignIn(req *t.SignInReq) (out *t.SignInResp, err error) {
 		Email:    &req.Identifier,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid credentials")
 	}
 
 	if !auth.CheckPasswordHash(req.Password, user.Password) {
@@ -87,7 +87,7 @@ func (s *UserService) SignIn(req *t.SignInReq) (out *t.SignInResp, err error) {
 
 	tkn, err := auth.GenToken(user.Id, user.Username, user.Email)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid credentials")
 	}
 
 	out = &t.SignInResp{
