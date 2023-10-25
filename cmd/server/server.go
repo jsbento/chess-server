@@ -9,6 +9,7 @@ import (
 
 	s "github.com/jsbento/chess-server/cmd/server/sockets"
 	t "github.com/jsbento/chess-server/cmd/server/types"
+	"github.com/jsbento/chess-server/cmd/services/chess"
 	"github.com/jsbento/chess-server/cmd/services/games"
 	"github.com/jsbento/chess-server/cmd/services/users"
 	"github.com/jsbento/chess-server/pkg/api"
@@ -16,10 +17,11 @@ import (
 )
 
 type Server struct {
-	r     *chi.Mux
-	cHub  *s.ChessHub
-	gameS *games.GameService
-	userS *users.UserService
+	r      *chi.Mux
+	cHub   *s.ChessHub
+	gameS  *games.GameService
+	userS  *users.UserService
+	chessS *chess.ChessService
 }
 
 func NewServer() (server *Server, err error) {
@@ -35,12 +37,17 @@ func NewServer() (server *Server, err error) {
 	if err != nil {
 		return nil, err
 	}
+	chS, err := chess.NewChessService(config)
+	if err != nil {
+		return nil, err
+	}
 
 	server = &Server{
-		r:     api.NewRouter(),
-		cHub:  s.NewChessHub(),
-		gameS: gmS,
-		userS: usS,
+		r:      api.NewRouter(),
+		cHub:   s.NewChessHub(),
+		gameS:  gmS,
+		userS:  usS,
+		chessS: chS,
 	}
 
 	server.r.Use(cors.New(cors.Options{
@@ -69,6 +76,13 @@ func NewServer() (server *Server, err error) {
 	// game routes
 	server.r.Route("/games", func(r chi.Router) {
 		r.Get("/", auth.CheckAuth(server.SearchGames()))
+		r.Get("/{id}", auth.CheckAuth(server.GetGame()))
+	})
+
+	// chess routes (for engine)
+	server.r.Route("/chess", func(r chi.Router) {
+		r.Post("/eval", server.EvalPosition())
+		r.Post("/search", server.SearchPosition())
 	})
 
 	return

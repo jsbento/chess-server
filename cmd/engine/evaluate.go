@@ -151,7 +151,7 @@ func (e *Engine) EvalPosition() int {
 		}
 
 		if c.WhitePassedMask[utils.Sq64(sq)]&e.Board.Pawns[c.BLACK] == 0 {
-			score += PawnPassed[c.RanksBrd[utils.Sq64(sq)]]
+			score += PawnPassed[c.RanksBrd[sq]]
 		}
 	}
 
@@ -165,7 +165,7 @@ func (e *Engine) EvalPosition() int {
 		}
 
 		if c.BlackPassedMask[utils.Sq64(sq)]&e.Board.Pawns[c.WHITE] == 0 {
-			score -= PawnPassed[7-c.RanksBrd[utils.Sq64(sq)]]
+			score -= PawnPassed[7-c.RanksBrd[sq]]
 		}
 	}
 

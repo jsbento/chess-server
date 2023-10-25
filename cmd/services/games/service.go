@@ -78,6 +78,7 @@ func (s *GameService) SearchGames(req *t.SearchGamesReq) (out []*t.Game, err err
 	}
 
 	opts := options.Find()
+	opts.SetSort(m.M{"date": -1})
 	if req.Limit != 0 {
 		opts.SetLimit(int64(req.Limit))
 		opts.SetSkip(int64(req.Offset))
