@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"math"
 
 	t "github.com/jsbento/chess-server/cmd/engine/types"
@@ -245,30 +244,30 @@ func (e *Engine) AlphaBeta(alpha, beta, depth int, info *t.SearchInfo, doNull bo
 
 func (e *Engine) SearchPosition(info *t.SearchInfo) string {
 	bestMove := c.NOMOVE
-	bestScore := -c.INFINITE
-	pvMoves := 0
-	pvNum := 0
+	// bestScore := -c.INFINITE
+	// pvMoves := 0
+	// pvNum := 0
 
 	e.ClearForSearch(info)
 
 	for currDepth := 1; currDepth <= info.Depth; currDepth++ {
-		bestScore = e.AlphaBeta(-c.INFINITE, c.INFINITE, currDepth, info, true)
+		// bestScore = e.AlphaBeta(-c.INFINITE, c.INFINITE, currDepth, info, true)
 
 		if info.Stopped {
 			break
 		}
 
-		pvMoves = e.GetPvLine(currDepth)
+		// pvMoves = e.GetPvLine(currDepth)
 		bestMove = e.Board.PvArray[0]
-		fmt.Printf("Depth: %d, Score: %d, Nodes: %d, Move: %s\n", currDepth, bestScore, info.Nodes, utils.PrintMove(bestMove))
-		fmt.Print("PV:")
-		for pvNum = 0; pvNum < pvMoves; pvNum++ {
-			fmt.Printf(" %s", utils.PrintMove(e.Board.PvArray[pvNum]))
-		}
-		fmt.Println()
+		// fmt.Printf("Depth: %d, Score: %d, Nodes: %d, Move: %s\n", currDepth, bestScore, info.Nodes, utils.PrintMove(bestMove))
+		// fmt.Print("PV:")
+		// for pvNum = 0; pvNum < pvMoves; pvNum++ {
+		// 	fmt.Printf(" %s", utils.PrintMove(e.Board.PvArray[pvNum]))
+		// }
+		// fmt.Println()
 	}
 
 	move := utils.PrintMove(bestMove)
-	fmt.Printf("bestmove %s\n", move)
+	// fmt.Printf("bestmove %s\n", move)
 	return move
 }
