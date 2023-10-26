@@ -77,6 +77,9 @@ func NewServer() (server *Server, err error) {
 	server.r.Route("/games", func(r chi.Router) {
 		r.Get("/", auth.CheckAuth(server.SearchGames()))
 		r.Get("/{id}", auth.CheckAuth(server.GetGame()))
+		r.Post("/", auth.CheckAuth(server.CreateGame()))
+		r.Put("/{id}", auth.CheckAuth(server.UpdateGame()))
+		r.Delete("/{id}", auth.CheckAuth(server.DeleteGame()))
 	})
 
 	// chess routes (for engine)
