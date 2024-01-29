@@ -76,7 +76,7 @@ func (e *Engine) ParseGo(line string, info *t.SearchInfo) string {
 		info.Depth = c.MAX_DEPTH
 	}
 
-	fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", time, info.StartTime, info.StopTime, info.Depth, info.TimeSet)
+	// fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", time, info.StartTime, info.StopTime, info.Depth, info.TimeSet)
 	return e.SearchPosition(info)
 }
 
