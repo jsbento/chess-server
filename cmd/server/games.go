@@ -29,10 +29,10 @@ func (s *Server) GetGame() http.HandlerFunc {
 
 func (s *Server) CreateGame() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &gT.Game{}
-		api.Parse(r, req)
+		req := gT.Game{}
+		api.Parse(r, &req)
 
-		err := s.gameS.CreateGame(req)
+		err := s.gameS.CreateGame(&req)
 		api.CheckError(http.StatusInternalServerError, err)
 		api.WriteJSON(w, http.StatusOK, req)
 	}
